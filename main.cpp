@@ -35,15 +35,13 @@ public:
 
     template <typename Iter>
     void ListIterInitialization(const Iter& begin, const Iter& end) {
-        SingleLinkedList reverse_list;
+        SingleLinkedList copy_list;
+        Iterator copy_list_tail = copy_list.before_begin();
         for (auto i = begin; i != end; ++i) {
-            reverse_list.PushFront(*i);
+            copy_list.InsertAfter(copy_list_tail, *i);
+            ++copy_list_tail;
         }
-        SingleLinkedList current_list;
-        for (const auto& list_element : reverse_list) {
-            current_list.PushFront(list_element);
-        }
-        swap(current_list);
+        swap(copy_list);
     }
 
     SingleLinkedList& operator=(const SingleLinkedList& rhs) {
@@ -94,12 +92,8 @@ public:
     }
 
     void swap(SingleLinkedList& other) noexcept {
-        auto other_head_pointer = other.head_.next_node;
-        auto other_size = other.size_;
-        other.head_.next_node = head_.next_node;
-        other.size_ = size_;
-        head_.next_node = other_head_pointer;
-        size_ = other_size;
+        std::swap(other.head_.next_node, head_.next_node);
+        std::swap(other.size_, size_);
     }
 
     [[nodiscard]] bool operator==(const SingleLinkedList& rhs) const noexcept {
@@ -115,11 +109,11 @@ public:
     }
 
     [[nodiscard]] bool operator<=(const SingleLinkedList& rhs) const noexcept {
-        return (*this < rhs) || (*this == rhs);
+        return !(*this > rhs);
     }
 
     [[nodiscard]] bool operator>(const SingleLinkedList& rhs) const noexcept {
-        return !(*this <= rhs);
+        return (rhs < *this);
     }
 
     [[nodiscard]] bool operator>=(const SingleLinkedList& rhs) const noexcept {
@@ -201,6 +195,7 @@ private:
         // Возвращает ссылку на самого себя
         // Инкремент итератора, не указывающего на существующий элемент списка, приводит к неопределённому поведению
         BasicIterator& operator++() noexcept {
+            assert(node_ != nullptr);
             node_ = node_->next_node;
             return *this;
         }
@@ -210,6 +205,7 @@ private:
         // Инкремент итератора, не указывающего на существующий элемент списка,
         // приводит к неопределённому поведению
         BasicIterator operator++(int) noexcept {
+            assert(node_ != nullptr);
             BasicIterator old_iterator = *this;
             node_ = node_->next_node;
             return old_iterator;
@@ -219,6 +215,7 @@ private:
         // Вызов этого оператора у итератора, не указывающего на существующий элемент списка,
         // приводит к неопределённому поведению
         [[nodiscard]] reference operator*() const noexcept {
+            assert(node_ != nullptr);
             return node_ -> value;
         }
 
@@ -226,6 +223,7 @@ private:
         // Вызов этого оператора у итератора, не указывающего на существующий элемент списка,
         // приводит к неопределённому поведению
         [[nodiscard]] pointer operator->() const noexcept {
+            assert(node_ != nullptr);
             return &(node_ -> value);
         }
 
@@ -295,6 +293,7 @@ public:
     }
 
     Iterator InsertAfter (ConstIterator pos, const Type& value) {
+        assert(pos.node_ != nullptr);
         Node* new_node = new Node(value, pos.node_->next_node);
         pos.node_->next_node = new_node;
         ++size_;
@@ -302,6 +301,7 @@ public:
     }
 
     Iterator EraseAfter (ConstIterator pos) noexcept {
+        assert(pos.node_ != nullptr);
         auto element_to_delete = pos.node_->next_node;
         auto new_next_node = element_to_delete->next_node;
         pos.node_->next_node = new_next_node;
@@ -309,6 +309,7 @@ public:
         --size_;
         return Iterator(new_next_node);
     }
+
 };
 
 template <typename Type>
